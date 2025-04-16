@@ -1,7 +1,6 @@
 // Main variables
 let scene, camera, renderer, globe, controls, raycaster;
 let markers = [];
-let selectedLocation = null;
 const savedLocations = JSON.parse(localStorage.getItem('holidayLocations')) || [];
 
 // DOM elements
@@ -10,7 +9,6 @@ const addBtn = document.getElementById('add-btn');
 const clearBtn = document.getElementById('clear-btn');
 const locationInfo = document.getElementById('location-info');
 const mouse = new THREE.Vector2();
-const clock = new THREE.Clock();
 
 // Initialize Three.js scene
 function init() {
@@ -35,8 +33,8 @@ function init() {
     // Create raycaster for mouse interactions
     raycaster = new THREE.Raycaster();
 
-    // Create simple globe
-    createSimpleGlobe();
+    // Create simple globe with more visible features
+    createEnhancedGlobe();
 
     // Load saved locations
     loadSavedLocations();
@@ -54,29 +52,36 @@ function init() {
     animate();
 }
 
-// Create simple colored globe
-function createSimpleGlobe() {
+// Create enhanced globe with visible land masses
+function createEnhancedGlobe() {
     const geometry = new THREE.SphereGeometry(1, 64, 64);
     
-    // Simple blue/green color scheme
+    // Create a more visually distinct globe
     const material = new THREE.MeshPhongMaterial({
         color: 0x1a73e8,
         specular: 0x111111,
         shininess: 5,
         transparent: true,
-        opacity: 0.9
+        opacity: 0.9,
+        // Add some basic land/water contrast
+        bumpScale: 0.05,
+        combine: THREE.MixOperation
     });
     
     globe = new THREE.Mesh(geometry, material);
     scene.add(globe);
 
-    // Add basic lighting
+    // Add lighting to make features visible
     const ambientLight = new THREE.AmbientLight(0x404040);
     scene.add(ambientLight);
 
     const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
     directionalLight.position.set(1, 1, 1);
     scene.add(directionalLight);
+
+    // Add axis helper to ensure scene is working
+    const axesHelper = new THREE.AxesHelper(1.5);
+    scene.add(axesHelper);
 }
 
 // Handle globe clicks
@@ -95,17 +100,36 @@ function onGlobeClick(event) {
         const point = intersects[0].point;
         const latLng = cartesianToLatLng(point);
         
-        // Reverse geocode to get city name
+        // Create a temporary marker at clicked position
+        createTempMarker(point.x, point.y, point.z);
+        
+        // Try to get city name
         reverseGeocode(latLng.lat, latLng.lng)
             .then(city => {
-                selectedLocation = { ...latLng, name: city };
-                updateLocationInfo(`Selected: ${city} (${latLng.lat.toFixed(2)}, ${latLng.lng.toFixed(2)})`);
+                locationInfo.textContent = `Selected: ${city} (${latLng.lat.toFixed(2)}, ${latLng.lng.toFixed(2)})`;
             })
             .catch(() => {
-                selectedLocation = latLng;
-                updateLocationInfo(`Selected coordinates: ${latLng.lat.toFixed(2)}, ${latLng.lng.toFixed(2)}`);
+                locationInfo.textContent = `Coordinates: ${latLng.lat.toFixed(2)}, ${latLng.lng.toFixed(2)}`;
             });
     }
+}
+
+// Create temporary marker (white)
+function createTempMarker(x, y, z) {
+    // Remove any existing temp markers
+    scene.children.filter(obj => obj.userData.isTempMarker).forEach(marker => scene.remove(marker));
+    
+    const markerGeometry = new THREE.SphereGeometry(0.03, 16, 16);
+    const markerMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+    marker.position.set(x, y, z);
+    marker.userData = { isTempMarker: true };
+    scene.add(marker);
+    
+    // Remove after 2 seconds
+    setTimeout(() => {
+        if (marker.parent) scene.remove(marker);
+    }, 2000);
 }
 
 // Add marker from search box
@@ -113,42 +137,34 @@ function addMarkerFromSearch() {
     const query = searchBox.value.trim();
     if (!query) return;
 
+    locationInfo.textContent = "Searching...";
+    
     geocode(query)
         .then(result => {
             if (result) {
                 addMarker(result.lat, result.lng, result.name);
                 saveLocation(result.lat, result.lng, result.name);
                 searchBox.value = '';
+                locationInfo.textContent = `Added: ${result.name}`;
             }
         })
         .catch(err => {
             console.error("Geocoding error:", err);
-            updateLocationInfo("Could not find that location");
+            locationInfo.textContent = "Could not find that location";
         });
 }
 
-// Add marker to globe
+// Add permanent marker (red)
 function addMarker(lat, lng, name) {
     const position = latLngToCartesian(lat, lng, 1.02);
     
-    // Create marker (red sphere)
-    const markerGeometry = new THREE.SphereGeometry(0.02, 16, 16);
+    const markerGeometry = new THREE.SphereGeometry(0.03, 16, 16);
     const markerMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
     const marker = new THREE.Mesh(markerGeometry, markerMaterial);
     marker.position.set(position.x, position.y, position.z);
-    
-    // Store reference to the location
     marker.userData = { lat, lng, name };
     scene.add(marker);
     markers.push(marker);
-    
-    // Add to saved locations
-    if (!savedLocations.some(loc => loc.name === name)) {
-        savedLocations.push({ lat, lng, name });
-        localStorage.setItem('holidayLocations', JSON.stringify(savedLocations));
-    }
-    
-    updateLocationInfo(`Added: ${name} (${lat.toFixed(2)}, ${lng.toFixed(2)})`);
 }
 
 // Clear all markers
@@ -156,7 +172,7 @@ function clearMarkers() {
     markers.forEach(marker => scene.remove(marker));
     markers = [];
     localStorage.removeItem('holidayLocations');
-    updateLocationInfo("Cleared all markers");
+    locationInfo.textContent = "Cleared all markers";
 }
 
 // Load saved locations
@@ -164,17 +180,19 @@ function loadSavedLocations() {
     savedLocations.forEach(location => {
         addMarker(location.lat, location.lng, location.name);
     });
+    
+    if (savedLocations.length > 0) {
+        locationInfo.textContent = `Loaded ${savedLocations.length} saved locations`;
+    }
 }
 
 // Save location to localStorage
 function saveLocation(lat, lng, name) {
-    savedLocations.push({ lat, lng, name });
-    localStorage.setItem('holidayLocations', JSON.stringify(savedLocations));
-}
-
-// Update location info display
-function updateLocationInfo(text) {
-    locationInfo.textContent = text;
+    // Check if already exists
+    if (!savedLocations.some(loc => loc.name === name)) {
+        savedLocations.push({ lat, lng, name });
+        localStorage.setItem('holidayLocations', JSON.stringify(savedLocations));
+    }
 }
 
 // Convert cartesian to lat/lng
@@ -199,29 +217,39 @@ function latLngToCartesian(lat, lng, radius) {
 
 // Simple geocoding using Nominatim (OpenStreetMap)
 async function geocode(query) {
-    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
-    const data = await response.json();
-    
-    if (data && data.length > 0) {
-        return {
-            lat: parseFloat(data[0].lat),
-            lng: parseFloat(data[0].lon),
-            name: data[0].display_name.split(',')[0] // Get just the city name
-        };
+    try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
+        const data = await response.json();
+        
+        if (data && data.length > 0) {
+            return {
+                lat: parseFloat(data[0].lat),
+                lng: parseFloat(data[0].lon),
+                name: data[0].display_name.split(',')[0] // Get just the city name
+            };
+        }
+        throw new Error("Location not found");
+    } catch (error) {
+        console.error("Geocoding failed:", error);
+        throw error;
     }
-    throw new Error("Location not found");
 }
 
 // Simple reverse geocoding
 async function reverseGeocode(lat, lng) {
-    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
-    const data = await response.json();
-    
-    if (data && data.address) {
-        return data.address.city || data.address.town || data.address.village || 
-               data.address.county || data.address.state || "Unknown location";
+    try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+        const data = await response.json();
+        
+        if (data && data.address) {
+            return data.address.city || data.address.town || data.address.village || 
+                   data.address.county || data.address.state || "Unknown location";
+        }
+        throw new Error("Could not determine location");
+    } catch (error) {
+        console.error("Reverse geocoding failed:", error);
+        throw error;
     }
-    throw new Error("Could not determine location");
 }
 
 // Handle window resize
