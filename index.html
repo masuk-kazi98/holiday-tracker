@@ -3,40 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Holiday Globe</title>
+    <title>Simple 3D Holiday Globe</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
+        #globe-container { position: relative; width: 100vw; height: 100vh; }
+        #globe { width: 100%; height: 100%; }
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255,255,255,0.8);
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 100;
+        }
+        #search-box { width: 200px; padding: 8px; }
+        #location-info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(255,255,255,0.8);
+            padding: 15px;
+            border-radius: 8px;
+            max-width: 300px;
+        }
+        .marker { color: red; font-size: 24px; position: absolute; }
+    </style>
 </head>
 <body>
     <div id="globe-container">
-        <div id="info-panel">
-            <h1>🌎 My Travel Globe</h1>
-            <div id="controls">
-                <button id="add-btn">+ Add Location</button>
-                <button id="clear-btn">Clear All</button>
-            </div>
-            <div id="locations-list"></div>
+        <div id="controls">
+            <input type="text" id="search-box" placeholder="Search city...">
+            <button id="add-btn">Add Marker</button>
+            <button id="clear-btn">Clear Markers</button>
         </div>
+        <div id="location-info">Click on the globe to select a location</div>
         <div id="globe"></div>
-    </div>
-
-    <!-- Add Location Modal -->
-    <div id="location-modal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Add Travel Location</h2>
-            <form id="location-form">
-                <input type="text" id="location-name" placeholder="Location name" required>
-                <input type="date" id="visit-date" required>
-                <div class="coord-inputs">
-                    <input type="number" id="latitude" placeholder="Latitude" step="0.0001" min="-90" max="90" required>
-                    <input type="number" id="longitude" placeholder="Longitude" step="0.0001" min="-180" max="180" required>
-                </div>
-                <textarea id="location-notes" placeholder="Notes about your visit"></textarea>
-                <button type="submit">Add Location</button>
-            </form>
-        </div>
     </div>
 
     <script src="globe.js"></script>
