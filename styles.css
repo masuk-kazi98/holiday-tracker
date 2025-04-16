@@ -1,66 +1,88 @@
 body {
-    font-family: 'Arial', sans-serif;
     margin: 0;
-    padding: 0;
+    overflow: hidden;
+    font-family: 'Arial', sans-serif;
 }
 
-.container {
-    display: flex;
-    flex-direction: column;
+#globe-container {
+    position: relative;
+    width: 100vw;
     height: 100vh;
 }
 
-header {
-    background: #2c3e50;
-    color: white;
-    padding: 1rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+#globe {
+    width: 100%;
+    height: 100%;
 }
 
-.controls button {
-    margin-left: 10px;
+#info-panel {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 15px;
+    border-radius: 10px;
+    max-width: 300px;
+    z-index: 100;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
+
+#controls {
+    margin: 10px 0;
+    display: flex;
+    gap: 10px;
+}
+
+#controls button {
     padding: 8px 12px;
     border: none;
     border-radius: 4px;
+    background: #2c3e50;
+    color: white;
     cursor: pointer;
 }
 
-#map {
-    flex-grow: 1;
-    height: 60vh;
+#controls button:hover {
+    background: #1a252f;
 }
 
-.sidebar {
-    width: 100%;
-    padding: 1rem;
-    background: #f5f5f5;
-    border-top: 1px solid #ddd;
-    max-height: 30vh;
+#locations-list {
+    max-height: 60vh;
     overflow-y: auto;
+}
+
+.location-item {
+    padding: 10px;
+    margin: 5px 0;
+    background: #f8f9fa;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.location-item:hover {
+    background: #e9ecef;
 }
 
 /* Modal styles */
 .modal {
     display: none;
     position: fixed;
-    z-index: 1000;
+    z-index: 200;
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.4);
+    background-color: rgba(0,0,0,0.7);
 }
 
 .modal-content {
     background-color: #fefefe;
-    margin: 15% auto;
+    margin: 10% auto;
     padding: 20px;
     border: 1px solid #888;
     width: 80%;
     max-width: 500px;
-    border-radius: 8px;
+    border-radius: 10px;
 }
 
 .close {
@@ -71,23 +93,27 @@ header {
     cursor: pointer;
 }
 
-#trip-form {
+.close:hover {
+    color: black;
+}
+
+#location-form {
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
 
-#trip-form input, #trip-form textarea {
+#location-form input, #location-form textarea {
     padding: 8px;
     border: 1px solid #ddd;
     border-radius: 4px;
 }
 
-#trip-form button {
-    padding: 10px;
-    background: #2c3e50;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
+.coord-inputs {
+    display: flex;
+    gap: 10px;
+}
+
+.coord-inputs input {
+    flex: 1;
 }

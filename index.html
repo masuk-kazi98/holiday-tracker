@@ -3,44 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Holiday Tracker</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="styles.css" />
+    <title>3D Holiday Globe</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🌍 My Travel Map</h1>
-            <div class="controls">
-                <button id="add-btn">➕ Add Trip</button>
-                <button id="clear-btn">🧹 Clear All</button>
+    <div id="globe-container">
+        <div id="info-panel">
+            <h1>🌎 My Travel Globe</h1>
+            <div id="controls">
+                <button id="add-btn">+ Add Location</button>
+                <button id="clear-btn">Clear All</button>
             </div>
-        </header>
-        
-        <div id="map"></div>
-        
-        <div class="sidebar">
-            <h2>My Trips</h2>
-            <div id="trip-list"></div>
+            <div id="locations-list"></div>
         </div>
+        <div id="globe"></div>
     </div>
 
-    <!-- Modal (hidden by default) -->
-    <div id="trip-modal" class="modal">
+    <!-- Add Location Modal -->
+    <div id="location-modal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
-            <h2>Add New Trip</h2>
-            <form id="trip-form">
-                <input type="text" id="location" placeholder="Location" required>
-                <input type="date" id="trip-date" required>
-                <textarea id="notes" placeholder="Notes"></textarea>
-                <button type="submit">Save Trip</button>
+            <h2>Add Travel Location</h2>
+            <form id="location-form">
+                <input type="text" id="location-name" placeholder="Location name" required>
+                <input type="date" id="visit-date" required>
+                <div class="coord-inputs">
+                    <input type="number" id="latitude" placeholder="Latitude" step="0.0001" min="-90" max="90" required>
+                    <input type="number" id="longitude" placeholder="Longitude" step="0.0001" min="-180" max="180" required>
+                </div>
+                <textarea id="location-notes" placeholder="Notes about your visit"></textarea>
+                <button type="submit">Add Location</button>
             </form>
-            <p>Click on the map to set coordinates</p>
         </div>
     </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="app.js"></script>
+    <script src="globe.js"></script>
 </body>
 </html>
